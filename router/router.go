@@ -2,31 +2,31 @@ package router
 
 import (
 	"taskmanager/controllers"
+	"taskmanager/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RouterSetup() *gin.Engine {
 	router := gin.Default()
-	router.GET("/tasks", func(ctx *gin.Context) {
-		controllers.GetAllTasks(ctx)
-	})
+	router.POST("/register", controllers.Register)
+	router.POST("/login", controllers.Login)
+	auth := router.Group("/")
+	auth.Use(middleware.AuthMiddleware())
+	{
+		auth.GET("/tasks", controllers.GetAllTasks)
+		auth.GET("/tasks/:id", controllers.GetSpecificData)
+	}
+	admin := router.Group("/")
+	admin.Use(middleware.AuthMiddleware(), middleware.AdminOnly())
+	{
+		admin.POST("/tasks", controllers.Post)
+		admin.PUT("/tasks/:id", controllers.UpdateSpecificData)
+		admin.DELETE("/tasks/:id", controllers.Delete)
 
-	router.GET("/tasks/:id", func(ctx *gin.Context) {
-		controllers.GetSpecificData(ctx)
-	})
-
-	router.PUT("/tasks/:id", func(ctx *gin.Context) {
-		controllers.UpdateSpecificData(ctx)
-	})
-
-	router.DELETE("/tasks/:id", func(ctx *gin.Context) {
-		controllers.Delete(ctx)
-	})
-
-	router.POST("/tasks", func(ctx *gin.Context) {
-		controllers.Post(ctx)
-	})
+		admin.POST("/promote", controllers.Promote)
+	}
 
 	return router
+
 }
